@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>birdieee 🐦</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    :root {
+      --bg: #000;
+      --text: #e6e6e6;
+      --card: #121212;
+      --accent: #1d9bf0;
+      --border: #2f2f2f;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 240px;
+      background: var(--bg);
+      padding: 1rem 0;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s ease;
+    }
+
+    .sidebar-item {
+      padding: 12px 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 1.1rem;
+      transition: background 0.2s;
+    }
+
+    .sidebar-item:hover {
+      background: var(--card);
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .header {
+      padding: 16px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    select {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 10px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 20px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab {
+      padding: 14px 0;
+      cursor: pointer;
+      font-weight: bold;
+      transition: color 0.3s, border-bottom 0.3s;
+    }
+
+    .tab.active {
+      border-bottom: 2px solid var(--accent);
+      color: var(--accent);
+    }
+
+    .post-box {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    textarea {
+      width: 100%;
+      background: var(--card);
+      border: none;
+      resize: none;
+      padding: 12px;
+      color: var(--text);
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 8px 20px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .timeline {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .post {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      transition: transform 0.2s ease;
+    }
+
+    .post:hover {
+      transform: scale(1.01);
+    }
+
+    .replies {
+      margin-top: 8px;
+      padding-left: 12px;
+      border-left: 2px solid var(--border);
+    }
+
+    .reply-box {
+      margin-top: 10px;
+      display: flex;
+      gap: 6px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 8px;
+      background: var(--card);
+      color: var(--text);
+      border: none;
+      border-radius: 6px;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 60px;
+        align-items: center;
+      }
+
+      .sidebar-item span {
+        display: none;
+      }
+    }
+
+    /* Themes */
+    .theme-light {
+      --bg: #ffffff;
+      --text: #111;
+      --card: #f4f4f4;
+      --accent: #1d9bf0;
+      --border: #ddd;
+    }
+
+    .theme-sepia {
+      --bg: #f7f1e1;
+      --text: #3b2f2f;
+      --card: #f0e6d2;
+      --accent: #b48a52;
+      --border: #cdb891;
+    }
+
+    .theme-monokai {
+      --bg: #272822;
+      --text: #f8f8f2;
+      --card: #3e3d32;
+      --accent: #fd971f;
+      --border: #49483e;
+    }
+  </style>
+</head>
+<body class="theme-sepia">
+
+  <div class="sidebar">
+    <div class="sidebar-item"><i class="fas fa-home"></i><span>Home</span></div>
+    <div class="sidebar-item"><i class="fas fa-bell"></i><span>Notifications</span></div>
+    <div class="sidebar-item"><i class="fas fa-user"></i><span>Profile</span></div>
+  </div>
+
+  <div class="main">
+    <div class="header">
+      birdieee 🐦
+      <select onchange="changeTheme(this.value)">
+        <option value="sepia" selected>Sepia</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="monokai">Monokai</option>
+      </select>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active">For You</div>
+      <div class="tab">Following</div>
+    </div>
+
+    <div class="post-box">
+      <textarea id="newPost" rows="3" placeholder="What’s happening?"></textarea>
+      <button onclick="submitPost()">Post</button>
+    </div>
+
+    <div class="timeline" id="timeline">Loading...</div>
+  </div>
+
+  <script>
+    let posts = [];
+
+    async function loadPosts() {
+      const res = await fetch('/api/posts');
+      posts = await res.json();
+      render();
+    }
+
+    async function submitPost() {
+      const content = document.getElementById("newPost").value.trim();
+      if (!content) return;
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      });
+      if (res.ok) {
+        document.getElementById("newPost").value = "";
+        await loadPosts();
+      }
+    }
+
+    async function submitReply(postId, inputId) {
+      const content = document.getElementById(inputId).value.trim();
+      if (!content) return;
+      const res = await fetch('/api/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ post_id: postId, content })
+      });
+      if (res.ok) {
+        document.getElementById(inputId).value = "";
+        await loadPosts();
+      }
+    }
+
+    function render() {
+      const timeline = document.getElementById("timeline");
+      timeline.innerHTML = "";
+
+      posts.forEach(post => {
+        const postDiv = document.createElement("div");
+        postDiv.className = "post";
+        postDiv.innerHTML = `<strong>Note #${post.id}</strong><p>${post.content}</p>`;
+
+        const replies = document.createElement("div");
+        replies.className = "replies";
+        post.replies.forEach(reply => {
+          const r = document.createElement("p");
+          r.textContent = `💬 ${reply}`;
+          replies.appendChild(r);
+        });
+
+        const replyId = `reply-${post.id}`;
+        const replyBox = document.createElement("div");
+        replyBox.className = "reply-box";
+        replyBox.innerHTML = `
+          <input id="${replyId}" type="text" placeholder="Reply..."/>
+          <button onclick="submitReply(${post.id}, '${replyId}')">Reply</button>
+        `;
+
+        postDiv.appendChild(replies);
+        postDiv.appendChild(replyBox);
+        timeline.appendChild(postDiv);
+      });
+    }
+
+    function changeTheme(theme) {
+      document.body.className = '';
+      document.body.classList.add(`theme-${theme}`);
+    }
+
+    loadPosts();
+  </script>
+
+</body>
+</html>
+
