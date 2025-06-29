@@ -238,81 +238,121 @@
     <div class="timeline" id="timeline">Loading...</div>
   </div>
 
-  <script>
-    let posts = [];
+<script>
+  let posts = [];
+  const currentUser = "you"; // or make this user-settable later
 
-    async function loadPosts() {
-      const res = await fetch('/api/posts');
-      posts = await res.json();
-      render();
+  async function loadPosts() {
+    const res = await fetch('/api/posts');
+    const data = await res.json();
+    posts = data;
+    render();
+  }
+
+  async function submitPost(parentId = null) {
+    const content = parentId ? document.getElementById(`reply-${parentId}`).value.trim()
+                             : document.getElementById("newPost").value.trim();
+
+    if (!content) return;
+
+    await fetch('/api/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content,
+        createdBy: currentUser,
+        parentId: parentId
+      })
+    });
+
+    if (!parentId) {
+      document.getElementById("newPost").value = "";
+    } else {
+      document.getElementById(`reply-${parentId}`).value = "";
     }
 
-    async function submitPost() {
-      const content = document.getElementById("newPost").value.trim();
-      if (!content) return;
-      const res = await fetch('/api/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content })
-      });
-      if (res.ok) {
-        document.getElementById("newPost").value = "";
-        await loadPosts();
+    await loadPosts();
+  }
+
+  function formatRelativeTime(isoDate) {
+    const now = new Date();
+    const then = new Date(isoDate);
+    const diff = Math.floor((now - then) / 1000); // seconds
+
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
+    if (diff < 172800) return "yesterday";
+    return `${Math.floor(diff / 86400)} days ago`;
+  }
+
+  function buildThreadTree(flatPosts) {
+    const map = {};
+    const roots = [];
+
+    flatPosts.forEach(post => {
+      post.replies = [];
+      map[post.id] = post;
+    });
+
+    flatPosts.forEach(post => {
+      if (post.parentId == null) {
+        roots.push(post);
+      } else if (map[post.parentId]) {
+        map[post.parentId].replies.push(post);
       }
-    }
+    });
 
-    async function submitReply(postId, inputId) {
-      const content = document.getElementById(inputId).value.trim();
-      if (!content) return;
-      const res = await fetch('/api/reply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ post_id: postId, content })
-      });
-      if (res.ok) {
-        document.getElementById(inputId).value = "";
-        await loadPosts();
-      }
-    }
+    return roots;
+  }
 
-    function render() {
-      const timeline = document.getElementById("timeline");
-      timeline.innerHTML = "";
+  function renderPost(post, level = 0) {
+    const container = document.createElement("div");
+    container.className = "post";
+    container.style.marginLeft = `${level * 20}px`;
 
-      posts.forEach(post => {
-        const postDiv = document.createElement("div");
-        postDiv.className = "post";
-        postDiv.innerHTML = `<strong>Note #${post.id}</strong><p>${post.content}</p>`;
+    const time = formatRelativeTime(post.createdWhen);
+    container.innerHTML = `
+      <strong>${post.createdBy}</strong>
+      <small style="opacity: 0.6; margin-left: 6px;">${time}</small>
+      <p>${post.content}</p>
+    `;
 
-        const replies = document.createElement("div");
-        replies.className = "replies";
-        post.replies.forEach(reply => {
-          const r = document.createElement("p");
-          r.textContent = `💬 ${reply}`;
-          replies.appendChild(r);
-        });
+    const replyBox = document.createElement("div");
+    replyBox.className = "reply-box";
+    replyBox.innerHTML = `
+      <input id="reply-${post.id}" type="text" placeholder="Reply..."/>
+      <button onclick="submitPost(${post.id})">Reply</button>
+    `;
+    container.appendChild(replyBox);
 
-        const replyId = `reply-${post.id}`;
-        const replyBox = document.createElement("div");
-        replyBox.className = "reply-box";
-        replyBox.innerHTML = `
-          <input id="${replyId}" type="text" placeholder="Reply..."/>
-          <button onclick="submitReply(${post.id}, '${replyId}')">Reply</button>
-        `;
-
-        postDiv.appendChild(replies);
-        postDiv.appendChild(replyBox);
-        timeline.appendChild(postDiv);
+    if (post.replies && post.replies.length) {
+      post.replies.forEach(reply => {
+        container.appendChild(renderPost(reply, level + 1));
       });
     }
 
-    function changeTheme(theme) {
-      document.body.className = '';
-      document.body.classList.add(`theme-${theme}`);
-    }
+    return container;
+  }
 
-    loadPosts();
-  </script>
+  function render() {
+    const timeline = document.getElementById("timeline");
+    timeline.innerHTML = "";
+
+    const tree = buildThreadTree(posts);
+    tree.forEach(post => {
+      timeline.appendChild(renderPost(post));
+    });
+  }
+
+  function changeTheme(theme) {
+    document.body.className = '';
+    document.body.classList.add(`theme-${theme}`);
+  }
+
+  loadPosts();
+</script>
+
 
 </body>
 </html>
