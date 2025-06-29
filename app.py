@@ -2,19 +2,25 @@ from flask import Flask, request, jsonify, send_from_directory
 from datetime import datetime
 import json
 import os
+import random
 
 app = Flask(__name__, static_folder="static")
-DATA_FILE = "vault/posts.json"
 
-# Initialize posts.json if not exists
+DATA_FILE = "vault/posts.json"
+BOTS_FILE = "static/bots.json"
+NOTIF_FILE = "vault/notifications.json"
+
+
+os.makedirs("vault", exist_ok=True)
+
 if not os.path.exists(DATA_FILE):
     with open(DATA_FILE, "w") as f:
         json.dump([], f)
 
-import random
+if not os.path.exists(NOTIF_FILE):
+    with open(NOTIF_FILE, "w") as f:
+        json.dump([], f)
 
-BOTS_FILE = "static/bots.json"
-NOTIF_FILE = "vault/notifications.json"
 
 def load_bots():
     with open(BOTS_FILE, "r") as f:
