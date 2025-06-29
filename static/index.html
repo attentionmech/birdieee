@@ -43,6 +43,7 @@
       gap: 14px;
       font-size: 1.1rem;
       transition: background 0.2s;
+      position: relative;
     }
 
     .sidebar-item:hover {
@@ -144,12 +145,6 @@
       transform: scale(1.01);
     }
 
-    .replies {
-      margin-top: 8px;
-      padding-left: 12px;
-      border-left: 2px solid var(--border);
-    }
-
     .reply-box {
       margin-top: 10px;
       display: flex;
@@ -204,25 +199,84 @@
       --accent: #fd971f;
       --border: #49483e;
     }
+
+    #notifCount {
+      position: absolute;
+      top: 8px;
+      left: 28px;
+      background: red;
+      color: white;
+      font-size: 0.7rem;
+      border-radius: 50%;
+      padding: 2px 6px;
+      display: none;
+    }
+
+    .notif-popup {
+      position: fixed;
+      top: 80px;
+      left: 260px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      width: 300px;
+      max-height: 400px;
+      overflow-y: auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 20;
+    }
+
+    .notif-popup-inner {
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+    }
+
+    .notif-popup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .notif-popup-header button {
+      background: transparent;
+      color: var(--text);
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .notif-list div {
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+    }
   </style>
 </head>
 <body class="theme-sepia">
 
   <div class="sidebar">
     <div class="sidebar-item"><i class="fas fa-home"></i><span>Home</span></div>
-    <div class="sidebar-item"><i class="fas fa-bell"></i><span>Notifications</span></div>
+    <div class="sidebar-item" onclick="toggleNotifPopup()">
+      <i class="fas fa-bell"></i><span>Notifications</span>
+      <span id="notifCount">0</span>
+    </div>
     <div class="sidebar-item"><i class="fas fa-user"></i><span>Profile</span></div>
   </div>
 
   <div class="main">
     <div class="header">
       birdieee 🐦
-      <select onchange="changeTheme(this.value)">
-        <option value="sepia" selected>Sepia</option>
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-        <option value="monokai">Monokai</option>
-      </select>
+      <div>
+        <select onchange="changeTheme(this.value)">
+          <option value="sepia" selected>Sepia</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="monokai">Monokai</option>
+        </select>
+      </div>
     </div>
 
     <div class="tabs">
@@ -238,20 +292,31 @@
     <div class="timeline" id="timeline">Loading...</div>
   </div>
 
+  <div id="notifPopup" class="notif-popup" style="display: none;">
+    <div class="notif-popup-inner">
+      <div class="notif-popup-header">
+        <strong>Notifications</strong>
+        <button onclick="closeNotifPopup()">×</button>
+      </div>
+      <div id="notifList" class="notif-list">Loading...</div>
+    </div>
+  </div>
+
 <script>
   let posts = [];
-  const currentUser = "you"; // or make this user-settable later
+  const currentUser = "you";
+  let notifications = [];
 
   async function loadPosts() {
     const res = await fetch('/api/posts');
-    const data = await res.json();
-    posts = data;
+    posts = await res.json();
     render();
   }
 
   async function submitPost(parentId = null) {
-    const content = parentId ? document.getElementById(`reply-${parentId}`).value.trim()
-                             : document.getElementById("newPost").value.trim();
+    const content = parentId
+      ? document.getElementById(`reply-${parentId}`).value.trim()
+      : document.getElementById("newPost").value.trim();
 
     if (!content) return;
 
@@ -272,13 +337,63 @@
     }
 
     await loadPosts();
+    await loadNotifications();
+  }
+
+  async function loadNotifications() {
+    const res = await fetch('/api/notifications');
+    notifications = await res.json();
+    updateNotifBadge();
+  }
+
+  function updateNotifBadge() {
+    const unseen = notifications.filter(n => !n.seen);
+    const notifEl = document.getElementById("notifCount");
+    if (unseen.length > 0) {
+      notifEl.style.display = "inline-block";
+      notifEl.textContent = unseen.length;
+    } else {
+      notifEl.style.display = "none";
+    }
+  }
+
+  function toggleNotifPopup() {
+    const popup = document.getElementById("notifPopup");
+    popup.style.display = popup.style.display === "none" ? "block" : "none";
+    if (popup.style.display === "block") {
+      renderNotifications();
+      markNotificationsSeen();
+    }
+  }
+
+  function closeNotifPopup() {
+    document.getElementById("notifPopup").style.display = "none";
+  }
+
+  function renderNotifications() {
+    const list = document.getElementById("notifList");
+    list.innerHTML = "";
+    if (notifications.length === 0) {
+      list.textContent = "No notifications.";
+      return;
+    }
+
+    notifications.slice().reverse().forEach(n => {
+      const div = document.createElement("div");
+      div.innerHTML = `<strong>${n.message}</strong><br><small style="opacity:0.6">${formatRelativeTime(n.timestamp)}</small>`;
+      list.appendChild(div);
+    });
+  }
+
+  function markNotificationsSeen() {
+    notifications.forEach(n => n.seen = true);
+    updateNotifBadge();
   }
 
   function formatRelativeTime(isoDate) {
     const now = new Date();
     const then = new Date(isoDate);
-    const diff = Math.floor((now - then) / 1000); // seconds
-
+    const diff = Math.floor((now - then) / 1000);
     if (diff < 60) return "just now";
     if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
     if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
@@ -338,7 +453,6 @@
   function render() {
     const timeline = document.getElementById("timeline");
     timeline.innerHTML = "";
-
     const tree = buildThreadTree(posts);
     tree.forEach(post => {
       timeline.appendChild(renderPost(post));
@@ -351,9 +465,8 @@
   }
 
   loadPosts();
+  loadNotifications();
 </script>
-
 
 </body>
 </html>
-

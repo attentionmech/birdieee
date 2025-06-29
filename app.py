@@ -4,12 +4,41 @@ import json
 import os
 
 app = Flask(__name__, static_folder="static")
-DATA_FILE = "posts.json"
+DATA_FILE = "vault/posts.json"
 
 # Initialize posts.json if not exists
 if not os.path.exists(DATA_FILE):
     with open(DATA_FILE, "w") as f:
         json.dump([], f)
+
+import random
+
+BOTS_FILE = "static/bots.json"
+NOTIF_FILE = "vault/notifications.json"
+
+def load_bots():
+    with open(BOTS_FILE, "r") as f:
+        return json.load(f)
+
+def load_notifications():
+    with open(NOTIF_FILE, "r") as f:
+        return json.load(f)
+
+def save_notifications(notifs):
+    with open(NOTIF_FILE, "w") as f:
+        json.dump(notifs, f, indent=2)
+
+def add_notification(message):
+    notifs = load_notifications()
+    notif = {
+        "id": max((n["id"] for n in notifs), default=0) + 1,
+        "message": message,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "seen": False
+    }
+    notifs.append(notif)
+    save_notifications(notifs)
+
 
 # Load full history (list of snapshots)
 def load_history():
@@ -31,6 +60,11 @@ def save_snapshot(messages):
     history.append(snapshot)
     with open(DATA_FILE, "w") as f:
         json.dump(history, f, indent=2)
+
+@app.route("/api/notifications", methods=["GET"])
+def get_notifications():
+    return jsonify(load_notifications())
+
 
 @app.route("/api/posts", methods=["GET"])
 def get_posts():
@@ -62,6 +96,24 @@ def create_post():
     }
 
     messages.append(new_post)
+
+    # Bot reply (only for top-level posts)
+    if parent_id is None:
+        bots = load_bots()
+        bot = random.choice(bots)
+        reply = random.choice(bot["replies"])
+        bot_post = {
+            "id": new_id + 1,
+            "parentId": new_id,
+            "createdBy": bot["name"],
+            "createdWhen": now,
+            "updatedWhen": now,
+            "content": reply,
+            "likes": []
+        }
+        messages.append(bot_post)
+        add_notification(f"{bot['name']} replied to your post")
+
     save_snapshot(messages)
     return jsonify(new_post), 201
 

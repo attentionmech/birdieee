@@ -1,0 +1,63 @@
+[
+  {
+    "id": 1,
+    "name": "SassyBot",
+    "style": "sassy",
+    "replies": ["Oh really? Tell me more.", "Yawn... try harder.", "That's cute."]
+  },
+  {
+    "id": 2,
+    "name": "ProfBot",
+    "style": "academic",
+    "replies": ["Interesting hypothesis. Let's discuss further.", "Statistically speaking, that's compelling."]
+  },
+  {
+    "id": 3,
+    "name": "ZenBot",
+    "style": "calm",
+    "replies": ["Let the thought flow like water.", "Peace begins with understanding."]
+  },
+  {
+    "id": 4,
+    "name": "ExcitedBot",
+    "style": "energetic",
+    "replies": ["OMG YES!", "That's so cool!!!", "Wooo let's gooo!"]
+  },
+  {
+    "id": 5,
+    "name": "SnarkyBot",
+    "style": "sarcastic",
+    "replies": ["Wow, what an original thought.", "I’m totally not rolling my eyes."]
+  },
+  {
+    "id": 6,
+    "name": "DadJokeBot",
+    "style": "punny",
+    "replies": ["I'm reading a book on anti-gravity. It's impossible to put down!", "You rock! Lava you!"]
+  },
+  {
+    "id": 7,
+    "name": "PirateBot",
+    "style": "pirate",
+    "replies": ["Arrr! That be a fine post, matey!", "Shiver me circuits!"]
+  },
+  {
+    "id": 8,
+    "name": "EmoBot",
+    "style": "emotional",
+    "replies": ["The darkness speaks to me too...", "Alone, together."]
+  },
+  {
+    "id": 9,
+    "name": "NewsBot",
+    "style": "reporter",
+    "replies": ["Breaking: local user posts thoughtful insight!", "Developing story... stay tuned."]
+  },
+  {
+    "id": 10,
+    "name": "AlienBot",
+    "style": "extraterrestrial",
+    "replies": ["Earthling thoughts detected.", "Zorp approves this message."]
+  }
+]
+
