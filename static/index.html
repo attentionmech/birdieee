@@ -13,6 +13,8 @@
       --card: #121212;
       --accent: #1d9bf0;
       --border: #2f2f2f;
+      --ai-accent: #9b59b6;
+      --success: #28a745;
     }
 
     body {
@@ -72,6 +74,18 @@
       z-index: 10;
     }
 
+    .ai-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: var(--ai-accent);
+    }
+
+    .ai-status.enabled {
+      color: var(--success);
+    }
+
     select {
       background: var(--card);
       color: var(--text);
@@ -124,6 +138,18 @@
       border-radius: 20px;
       font-weight: bold;
       cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: #1a8cd8;
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+      transform: none;
     }
 
     .timeline {
@@ -138,11 +164,76 @@
       border-radius: 10px;
       padding: 14px;
       border: 1px solid var(--border);
-      transition: transform 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+      scroll-margin-top: 100px;
     }
 
     .post:hover {
       transform: scale(1.01);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .post.ai-post {
+      border-left: 3px solid var(--ai-accent);
+    }
+
+    .post.highlighted {
+      box-shadow: 0 0 20px var(--accent);
+      border-color: var(--accent);
+    }
+
+    .post-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .post-author {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ai-badge {
+      background: var(--ai-accent);
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+
+    .post-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      align-items: center;
+    }
+
+    .like-btn {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+
+    .like-btn:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .like-btn.liked {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
     }
 
     .reply-box {
@@ -156,12 +247,95 @@
       padding: 8px;
       background: var(--card);
       color: var(--text);
-      border: none;
+      border: 1px solid var(--border);
       border-radius: 6px;
     }
 
     input:focus, textarea:focus {
       outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Modal Styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+      border: 1px solid var(--border);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+    }
+
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      background: var(--bg);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 25px;
+      background: var(--border);
+      border-radius: 25px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .toggle-switch.on {
+      background: var(--accent);
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 21px;
+      height: 21px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.3s;
+    }
+
+    .toggle-switch.on::after {
+      transform: translateX(25px);
     }
 
     @media (max-width: 768px) {
@@ -182,6 +356,7 @@
       --card: #f4f4f4;
       --accent: #1d9bf0;
       --border: #ddd;
+      --ai-accent: #8e44ad;
     }
 
     .theme-sepia {
@@ -190,6 +365,7 @@
       --card: #f0e6d2;
       --accent: #b48a52;
       --border: #cdb891;
+      --ai-accent: #8e44ad;
     }
 
     .theme-monokai {
@@ -198,6 +374,7 @@
       --card: #3e3d32;
       --accent: #fd971f;
       --border: #49483e;
+      --ai-accent: #ae81ff;
     }
 
     #notifCount {
@@ -210,6 +387,13 @@
       border-radius: 50%;
       padding: 2px 6px;
       display: none;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
     }
 
     .notif-popup {
@@ -252,10 +436,47 @@
       font-size: 0.9rem;
       border-bottom: 1px solid var(--border);
       padding-bottom: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .notif-list div:hover {
+      background: var(--bg);
+      border-radius: 5px;
+      padding: 6px;
+    }
+
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      color: var(--text);
+      opacity: 0.7;
+    }
+
+    .spinner {
+      border: 2px solid var(--border);
+      border-top: 2px solid var(--accent);
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body class="theme-sepia">
+
+  <audio id="notificationSound" preload="auto">
+    <source src="static/notification.opus" type="audio/ogg; codecs=opus">
+    <source src="static/notification.mp3" type="audio/mpeg">
+  </audio>
 
   <div class="sidebar">
     <div class="sidebar-item"><i class="fas fa-home"></i><span>Home</span></div>
@@ -264,11 +485,20 @@
       <span id="notifCount">0</span>
     </div>
     <div class="sidebar-item"><i class="fas fa-user"></i><span>Profile</span></div>
+    <div class="sidebar-item" onclick="openSettingsModal()">
+      <i class="fas fa-cog"></i><span>Settings</span>
+    </div>
   </div>
 
   <div class="main">
     <div class="header">
-      birdieee 🐦
+      <div>
+        birdieee 🐦
+        <div id="aiStatus" class="ai-status">
+          <i class="fas fa-robot"></i>
+          <span>AI Loading...</span>
+        </div>
+      </div>
       <div>
         <select onchange="changeTheme(this.value)">
           <option value="sepia" selected>Sepia</option>
@@ -285,11 +515,16 @@
     </div>
 
     <div class="post-box">
-      <textarea id="newPost" rows="3" placeholder="What’s happening?"></textarea>
-      <button onclick="submitPost()">Post</button>
+      <textarea id="newPost" rows="3" placeholder="What's happening?"></textarea>
+      <button onclick="submitPost()" id="postBtn">Post</button>
     </div>
 
-    <div class="timeline" id="timeline">Loading...</div>
+    <div class="timeline" id="timeline">
+      <div class="loading">
+        <div class="spinner"></div>
+        Loading posts...
+      </div>
+    </div>
   </div>
 
   <div id="notifPopup" class="notif-popup" style="display: none;">
@@ -302,15 +537,113 @@
     </div>
   </div>
 
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Settings</h3>
+        <button class="close-btn" onclick="closeSettingsModal()">×</button>
+      </div>
+      <div class="setting-item">
+        <div>
+          <strong>Notification Sounds</strong>
+          <div style="font-size: 0.8rem; color: var(--text); opacity: 0.7;">Play sound when AI replies</div>
+        </div>
+        <div class="toggle-switch" id="notificationToggle" onclick="toggleNotificationSounds()">
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script>
   let posts = [];
   const currentUser = "you";
   let notifications = [];
+  let lastNotificationCount = 0;
+  let aiStatus = { enabled: false, personalities: [] };
+  let settings = { notifications_enabled: true };
+
+  async function loadSettings() {
+    try {
+      const res = await fetch('/api/settings');
+      settings = await res.json();
+      updateSettingsUI();
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+    }
+  }
+
+  async function saveSettings() {
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      });
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+    }
+  }
+
+  function updateSettingsUI() {
+    const toggle = document.getElementById('notificationToggle');
+    if (settings.notifications_enabled) {
+      toggle.classList.add('on');
+    } else {
+      toggle.classList.remove('on');
+    }
+  }
+
+  function toggleNotificationSounds() {
+    settings.notifications_enabled = !settings.notifications_enabled;
+    updateSettingsUI();
+    saveSettings();
+  }
+
+  function openSettingsModal() {
+    document.getElementById('settingsModal').style.display = 'flex';
+  }
+
+  function closeSettingsModal() {
+    document.getElementById('settingsModal').style.display = 'none';
+  }
+
+  async function loadAIStatus() {
+    try {
+      const res = await fetch('/api/ai-status');
+      aiStatus = await res.json();
+      updateAIStatusDisplay();
+    } catch (error) {
+      console.error('Failed to load AI status:', error);
+    }
+  }
+
+  function updateAIStatusDisplay() {
+    const statusEl = document.getElementById('aiStatus');
+    if (aiStatus.enabled) {
+      statusEl.className = 'ai-status enabled';
+      statusEl.innerHTML = `
+        <i class="fas fa-robot"></i>
+        <span>AI Active (${aiStatus.personalities.length} personalities)</span>
+      `;
+    } else {
+      statusEl.className = 'ai-status';
+      statusEl.innerHTML = `
+        <i class="fas fa-robot"></i>
+        <span>AI Offline</span>
+      `;
+    }
+  }
 
   async function loadPosts() {
-    const res = await fetch('/api/posts');
-    posts = await res.json();
-    render();
+    try {
+      const res = await fetch('/api/posts');
+      posts = await res.json();
+      render();
+    } catch (error) {
+      console.error('Failed to load posts:', error);
+      document.getElementById('timeline').innerHTML = '<div class="loading">Failed to load posts</div>';
+    }
   }
 
   async function submitPost(parentId = null) {
@@ -320,30 +653,87 @@
 
     if (!content) return;
 
-    await fetch('/api/posts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        content,
-        createdBy: currentUser,
-        parentId: parentId
-      })
-    });
+    const button = parentId ? 
+      document.querySelector(`#reply-${parentId} + button`) : 
+      document.getElementById('postBtn');
+    
+    button.disabled = true;
+    button.textContent = 'Posting...';
 
-    if (!parentId) {
-      document.getElementById("newPost").value = "";
-    } else {
-      document.getElementById(`reply-${parentId}`).value = "";
+    try {
+      await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content,
+          createdBy: currentUser,
+          parentId: parentId
+        })
+      });
+
+      if (!parentId) {
+        document.getElementById("newPost").value = "";
+      } else {
+        document.getElementById(`reply-${parentId}`).value = "";
+      }
+
+      await loadPosts();
+    } catch (error) {
+      console.error('Failed to submit post:', error);
+      alert('Failed to post. Please try again.');
+    } finally {
+      button.disabled = false;
+      button.textContent = parentId ? 'Reply' : 'Post';
     }
+  }
 
-    await loadPosts();
-    await loadNotifications();
+  async function likePost(postId) {
+    try {
+      const res = await fetch(`/api/posts/${postId}/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: currentUser })
+      });
+      
+      const result = await res.json();
+      if (result.success) {
+        await loadPosts(); // Refresh to show updated likes
+      }
+    } catch (error) {
+      console.error('Failed to like post:', error);
+    }
   }
 
   async function loadNotifications() {
-    const res = await fetch('/api/notifications');
-    notifications = await res.json();
-    updateNotifBadge();
+    try {
+      const res = await fetch('/api/notifications');
+      const newNotifications = await res.json();
+      
+      // Check if we have new notifications
+      if (newNotifications.length > lastNotificationCount && lastNotificationCount > 0) {
+        if (settings.notifications_enabled) {
+          playNotificationSound();
+        }
+      }
+      
+      notifications = newNotifications;
+      lastNotificationCount = notifications.length;
+      updateNotifBadge();
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+    }
+  }
+
+  function playNotificationSound() {
+    try {
+      const audio = document.getElementById('notificationSound');
+      audio.currentTime = 0;
+      audio.play().catch(e => {
+        console.log('Could not play notification sound:', e);
+      });
+    } catch (error) {
+      console.log('Notification sound not available:', error);
+    }
   }
 
   function updateNotifBadge() {
@@ -357,17 +747,32 @@
     }
   }
 
-  function toggleNotifPopup() {
+  async function toggleNotifPopup() {
     const popup = document.getElementById("notifPopup");
     popup.style.display = popup.style.display === "none" ? "block" : "none";
     if (popup.style.display === "block") {
       renderNotifications();
-      markNotificationsSeen();
+      await markNotificationsSeen();
     }
   }
 
   function closeNotifPopup() {
     document.getElementById("notifPopup").style.display = "none";
+  }
+
+  function jumpToPost(postId) {
+    const postElement = document.getElementById(`post-${postId}`);
+    if (postElement) {
+      // Highlight the post temporarily
+      postElement.classList.add('highlighted');
+      postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      // Remove highlight after 3 seconds
+      setTimeout(() => {
+        postElement.classList.remove('highlighted');
+      }, 3000);
+    }
+    closeNotifPopup();
   }
 
   function renderNotifications() {
@@ -380,14 +785,31 @@
 
     notifications.slice().reverse().forEach(n => {
       const div = document.createElement("div");
-      div.innerHTML = `<strong>${n.message}</strong><br><small style="opacity:0.6">${formatRelativeTime(n.timestamp)}</small>`;
+      div.innerHTML = `
+        <strong>${n.message}</strong><br>
+        <small style="opacity:0.6">${formatRelativeTime(n.timestamp)}</small>
+        ${n.post_id ? '<br><small style="color: var(--accent);">Click to view post</small>' : ''}
+      `;
+      
+      if (n.post_id) {
+        div.onclick = () => jumpToPost(n.post_id);
+      }
+      
       list.appendChild(div);
     });
   }
 
-  function markNotificationsSeen() {
-    notifications.forEach(n => n.seen = true);
-    updateNotifBadge();
+  async function markNotificationsSeen() {
+    try {
+      await fetch('/api/notifications/mark-seen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      notifications.forEach(n => n.seen = true);
+      updateNotifBadge();
+    } catch (error) {
+      console.error('Failed to mark notifications as seen:', error);
+    }
   }
 
   function formatRelativeTime(isoDate) {
@@ -395,10 +817,10 @@
     const then = new Date(isoDate);
     const diff = Math.floor((now - then) / 1000);
     if (diff < 60) return "just now";
-    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
     if (diff < 172800) return "yesterday";
-    return `${Math.floor(diff / 86400)} days ago`;
+    return `${Math.floor(diff / 86400)}d`;
   }
 
   function buildThreadTree(flatPosts) {
@@ -418,25 +840,48 @@
       }
     });
 
+    // Sort replies by timestamp
+    Object.values(map).forEach(post => {
+      post.replies.sort((a, b) => new Date(a.createdWhen) - new Date(b.createdWhen));
+    });
+
+    // Sort root posts by timestamp (newest first)
+    roots.sort((a, b) => new Date(b.createdWhen) - new Date(a.createdWhen));
+
     return roots;
   }
 
   function renderPost(post, level = 0) {
     const container = document.createElement("div");
-    container.className = "post";
+    container.className = `post ${post.isAI ? 'ai-post' : ''}`;
+    container.id = `post-${post.id}`;
     container.style.marginLeft = `${level * 20}px`;
 
     const time = formatRelativeTime(post.createdWhen);
+    const likes = post.likes || [];
+    const isLiked = likes.includes(currentUser);
+    
     container.innerHTML = `
-      <strong>${post.createdBy}</strong>
-      <small style="opacity: 0.6; margin-left: 6px;">${time}</small>
+      <div class="post-header">
+        <div class="post-author">
+          <strong>${post.createdBy}</strong>
+          ${post.isAI ? `<span class="ai-badge">AI</span>` : ''}
+          <small style="opacity: 0.6; margin-left: 6px;">${time}</small>
+        </div>
+      </div>
       <p>${post.content}</p>
+      <div class="post-actions">
+        <button class="like-btn ${isLiked ? 'liked' : ''}" onclick="likePost(${post.id})">
+          <i class="fas fa-heart"></i>
+          ${likes.length > 0 ? likes.length : ''}
+        </button>
+      </div>
     `;
 
     const replyBox = document.createElement("div");
     replyBox.className = "reply-box";
     replyBox.innerHTML = `
-      <input id="reply-${post.id}" type="text" placeholder="Reply..."/>
+      <input id="reply-${post.id}" type="text" placeholder="Reply..." onkeypress="if(event.key==='Enter') submitPost(${post.id})"/>
       <button onclick="submitPost(${post.id})">Reply</button>
     `;
     container.appendChild(replyBox);
@@ -454,6 +899,12 @@
     const timeline = document.getElementById("timeline");
     timeline.innerHTML = "";
     const tree = buildThreadTree(posts);
+    
+    if (tree.length === 0) {
+      timeline.innerHTML = '<div class="loading">No posts yet. Start the conversation!</div>';
+      return;
+    }
+    
     tree.forEach(post => {
       timeline.appendChild(renderPost(post));
     });
@@ -464,8 +915,44 @@
     document.body.classList.add(`theme-${theme}`);
   }
 
-  loadPosts();
-  loadNotifications();
+  // Auto-refresh functions
+  function startAutoRefresh() {
+    // Refresh posts every 30 seconds
+    setInterval(loadPosts, 30000);
+    
+    // Check notifications every 10 seconds
+    setInterval(loadNotifications, 10000);
+  }
+
+  // Handle Enter key in main post box
+  document.addEventListener('DOMContentLoaded', function() {
+    const newPostTextarea = document.getElementById('newPost');
+    newPostTextarea.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        submitPost();
+      }
+    });
+  });
+
+  // Close modals when clicking outside
+  window.addEventListener('click', function(event) {
+    const settingsModal = document.getElementById('settingsModal');
+    if (event.target === settingsModal) {
+      closeSettingsModal();
+    }
+  });
+
+  // Initialize the app
+  async function initializeApp() {
+    await loadSettings();
+    await loadAIStatus();
+    await loadPosts();
+    await loadNotifications();
+    startAutoRefresh();
+  }
+
+  initializeApp();
 </script>
 
 </body>
