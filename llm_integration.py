@@ -2,97 +2,13 @@ import os
 import random
 import asyncio
 from typing import List, Dict, Optional
-from abc import ABC, abstractmethod
-from openai import AzureOpenAI, OpenAI
-import anthropic
+from litellm import completion, acompletion
 from datetime import datetime
 import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-class LLMProvider(ABC):
-    """Abstract base class for LLM providers"""
-    
-    @abstractmethod
-    def generate_response(self, messages: List[Dict[str, str]], max_tokens: int = 150) -> str:
-        pass
-
-class AzureOpenAIProvider(LLMProvider):
-    def __init__(self):
-        self.client = AzureOpenAI(
-            api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-12-01-preview"),
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-        )
-        self.deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4.1")
-    
-    def generate_response(self, messages: List[Dict[str, str]], max_tokens: int = 150) -> str:
-        try:
-            response = self.client.chat.completions.create(
-                model=self.deployment_name,
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=0.9,
-                top_p=0.95,
-                frequency_penalty=0.3,
-                presence_penalty=0.3
-            )
-            return response.choices[0].message.content.strip()
-        except Exception as e:
-            logger.error(f"Azure OpenAI error: {e}")
-            return "Sorry, I'm having trouble responding right now! 🤖"
-
-class OpenAIProvider(LLMProvider):
-    def __init__(self):
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.model = os.getenv("OPENAI_MODEL", "gpt-4.1")
-    
-    def generate_response(self, messages: List[Dict[str, str]], max_tokens: int = 150) -> str:
-        try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=0.9,
-                top_p=0.95,
-                frequency_penalty=0.3,
-                presence_penalty=0.3
-            )
-            return response.choices[0].message.content.strip()
-        except Exception as e:
-            logger.error(f"OpenAI error: {e}")
-            return "Oops! My circuits are a bit tangled right now! ⚡"
-
-class AnthropicProvider(LLMProvider):
-    def __init__(self):
-        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-        self.model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
-    
-    def generate_response(self, messages: List[Dict[str, str]], max_tokens: int = 150) -> str:
-        try:
-            # Convert messages format for Anthropic
-            system_msg = ""
-            user_messages = []
-            
-            for msg in messages:
-                if msg["role"] == "system":
-                    system_msg = msg["content"]
-                else:
-                    user_messages.append(msg)
-            
-            response = self.client.messages.create(
-                model=self.model,
-                max_tokens=max_tokens,
-                temperature=0.9,
-                system=system_msg,
-                messages=user_messages
-            )
-            return response.content[0].text.strip()
-        except Exception as e:
-            logger.error(f"Anthropic error: {e}")
-            return "I seem to be lost in thought at the moment! 🤔"
 
 class AIPersonality:
     def __init__(self, name: str, style: str, system_prompt: str, personality_traits: List[str]):
@@ -257,40 +173,59 @@ You're the beginner's mind that asks the questions experts forget to ask.""",
 
 class LLMIntegration:
     def __init__(self):
-        self.provider = self._initialize_provider()
         self.personalities = AI_PERSONALITIES
+        self.model = self._determine_model()
+        self._validate_configuration()
         
-    def _initialize_provider(self) -> LLMProvider:
-        """Initialize the appropriate LLM provider based on environment variables"""
-        provider_type = os.getenv("LLM_PROVIDER")
-        if not provider_type:
-            logger.error("LLM_PROVIDER environment variable not set!")
-            raise ValueError("No LLM provider configured. Please set the LLM_PROVIDER environment variable.")
+    def _determine_model(self) -> str:
+        """Determine which model to use based on environment variables"""
+        # Direct model specification (most flexible)
+        if os.getenv("LITELLM_MODEL"):
+            model = os.getenv("LITELLM_MODEL")
+            logger.info(f"Using specified model: {model}")
+            return model
         
-        provider_type = provider_type.lower()
-        
-        if provider_type == "azure":
-            if not all([os.getenv("AZURE_OPENAI_ENDPOINT"), os.getenv("AZURE_OPENAI_API_KEY")]):
-                logger.warning("Azure OpenAI credentials not found, falling back to OpenAI")
-                provider_type = "openai"
-            else:
-                return AzureOpenAIProvider()
-        
-        if provider_type == "openai":
-            if not os.getenv("OPENAI_API_KEY"):
-                logger.warning("OpenAI API key not found, falling back to Anthropic")
-                provider_type = "anthropic"
-            else:
-                return OpenAIProvider()
-        
-        if provider_type == "anthropic":
-            if not os.getenv("ANTHROPIC_API_KEY"):
-                logger.error("No valid LLM provider credentials found!")
-                raise ValueError("No LLM provider configured. Please set appropriate environment variables.")
-            else:
-                return AnthropicProvider()
-        
-        raise ValueError(f"Unknown provider type: {provider_type}")
+        # Smart defaults for main providers
+        if os.getenv("OPENAI_API_KEY"):
+            model = os.getenv("OPENAI_MODEL", "openai/gpt-4.1")
+            logger.info(f"Using OpenAI model: {model}")
+            return model
+            
+        elif os.getenv("ANTHROPIC_API_KEY"):
+            model = os.getenv("ANTHROPIC_MODEL", "anthropic/claude-sonnet-4-20250514")
+            logger.info(f"Using Anthropic model: {model}")
+            return model
+            
+        elif os.getenv("AZURE_OPENAI_API_KEY") and os.getenv("AZURE_OPENAI_ENDPOINT"):
+            deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4.1")
+            model = f"azure/{deployment}"
+            logger.info(f"Using Azure OpenAI model: {model}")
+            return model
+            
+        elif os.getenv("OPENROUTER_API_KEY"):
+            model = os.getenv("OPENROUTER_MODEL", "openrouter/anthropic/claude-3.5-sonnet")
+            logger.info(f"Using OpenRouter model: {model}")
+            return model
+            
+        else:
+            logger.error("No LLM provider configured! Set OPENAI_API_KEY, ANTHROPIC_API_KEY, AZURE_OPENAI_API_KEY, or OPENROUTER_API_KEY")
+            raise ValueError("No LLM provider configured. Please set appropriate environment variables.")
+    
+    def _validate_configuration(self):
+        """Validate that the selected model configuration is correct"""
+        try:
+            # Test with a simple message
+            test_messages = [{"role": "user", "content": "Hello"}]
+            response = completion(
+                model=self.model,
+                messages=test_messages,
+                max_tokens=10,
+                timeout=30
+            )
+            logger.info("LLM configuration validated successfully")
+        except Exception as e:
+            logger.error(f"LLM configuration validation failed: {e}")
+            raise ValueError(f"Invalid LLM configuration for model {self.model}: {e}")
     
     def get_random_personality(self) -> AIPersonality:
         """Get a random AI personality"""
@@ -325,10 +260,81 @@ class LLMIntegration:
         })
         
         try:
-            response = self.provider.generate_response(messages, max_tokens=100)
-            return response
+            response = completion(
+                model=self.model,
+                messages=messages,
+                max_tokens=100,
+                temperature=0.9,
+                top_p=0.95,
+                frequency_penalty=0.3,
+                presence_penalty=0.3,
+                timeout=30
+            )
+            
+            # Extract content from response
+            content = response.choices[0].message.content.strip()
+            return content
+            
         except Exception as e:
             logger.error(f"Failed to generate LLM response: {e}")
+            # Fallback to template response
+            template = random.choice(personality.response_templates)
+            return template.format(
+                topic="this",
+                speculation="something interesting happened",
+                connection="something related",
+                practical_point="the main issue",
+                innovation="a new approach",
+                trend="innovation",
+                time_period="the past",
+                historical_parallel="similar patterns",
+                historical_event="history",
+                concept="the concept",
+                question="this is important"
+            )
+    
+    async def generate_reply_async(self, personality: AIPersonality, post_content: str, 
+                                  conversation_context: List[Dict] = None, user_name: str = "someone") -> str:
+        """Async version of generate_reply for better performance"""
+        
+        # Build conversation context (same as sync version)
+        messages = [{"role": "system", "content": personality.system_prompt}]
+        
+        if conversation_context:
+            for msg in conversation_context[-3:]:
+                role = "assistant" if msg.get("createdBy") in [p.name for p in self.personalities] else "user"
+                messages.append({
+                    "role": role,
+                    "content": f"{msg.get('createdBy', 'User')}: {msg.get('content', '')}"
+                })
+        
+        messages.append({
+            "role": "user", 
+            "content": f"{user_name} posted: {post_content}"
+        })
+        
+        messages.append({
+            "role": "system",
+            "content": f"Respond as {personality.name} with your {personality.style} personality. Keep it conversational, engaging, and under 150 characters. Write in lowercase (except for 'I' and proper nouns). DO NOT include your name in the response - it will be shown separately."
+        })
+        
+        try:
+            response = await acompletion(
+                model=self.model,
+                messages=messages,
+                max_tokens=100,
+                temperature=0.9,
+                top_p=0.95,
+                frequency_penalty=0.3,
+                presence_penalty=0.3,
+                timeout=30
+            )
+            
+            content = response.choices[0].message.content.strip()
+            return content
+            
+        except Exception as e:
+            logger.error(f"Failed to generate async LLM response: {e}")
             # Fallback to template response
             template = random.choice(personality.response_templates)
             return template.format(
